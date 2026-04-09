@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Background with Interactive Card</title>
+    <style>
+        /* ===== BASE RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+        }
+
+        /* ===== VIDEO BACKGROUND ===== */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -2;
+            opacity: 0.7;
+        }
+
+        /* ===== ENHANCEMENT LAYERS ===== */
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg, 
+                rgba(0, 0, 0, 0.4) 0%, 
+                rgba(0, 0, 0, 0.2) 40%, 
+                rgba(0, 0, 0, 0.3) 50%, 
+                rgba(0, 0, 0, 0.4) 60%, 
+                rgba(0, 0, 0, 0.5) 100%
+            );
+            z-index: -1;
+        }
+
+        .bg-bokeh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(70, 130, 180, 0.08) 0%, transparent 30%),
+                radial-gradient(circle at 75% 75%, rgba(138, 43, 226, 0.06) 0%, transparent 25%),
+                radial-gradient(circle at 40% 60%, rgba(255, 140, 0, 0.05) 0%, transparent 35%),
+                radial-gradient(circle at 60% 40%, rgba(220, 20, 60, 0.04) 0%, transparent 40%);
+            z-index: -1;
+            pointer-events: none;
+            animation: bokeh-float 18s ease-in-out infinite;
+        }
+
+        @keyframes bokeh-float {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.03); }
+        }
+
+        .bg-grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJmIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44IiBudW1PY3RhdmVzPSIzIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI2YpIiBvcGFjaXR5PSIwLjAyIi8+PC9zdmc+');
+            opacity: 0.2;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* ===== MAIN CONTENT CONTAINER ===== */
+        .content-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            z-index: 10;
+        }
+
+        /* ===== INTERACTIVE CARD ===== */
+        .interactive-card {
+            position: relative;
+            width: 320px;
+            max-width: 90%;
+            height: 420px;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 100%
+            );
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.37),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+        }
+
+        .interactive-card:hover {
+            transform: translateY(-8px) rotateX(4deg) rotateY(4deg) scale(1.02);
+            box-shadow: 
+                0 16px 48px rgba(0, 0, 0, 0.45),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .card-glow {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(
+                circle at center,
+                rgba(255, 255, 255, 0.15) 0%,
+                transparent 70%
+            );
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            pointer-events: none;
+        }
+
+        .interactive-card:hover .card-glow {
+            opacity: 1;
+        }
+
+        .card-content {
+            position: relative;
+            padding: 2.5rem;
+            text-align: center;
+            color: white;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(
+                to right,
+                #ffffff,
+                #e0e0e0
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            display: inline-block;
+        }
+
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(
+                90deg,
+                #4facfe,
+                #00f2fe
+            );
+            border-radius: 3px;
+        }
+
+        .card-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            flex-grow: 1;
+        }
+
+        .card-button {
+            display: inline-block;
+            padding: 0.9rem 2.2rem;
+            background: linear-gradient(
+                135deg,
+                #4facfe 0%,
+                #00f2fe 100%
+            );
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: all 0.5s ease;
+        }
+
+        .card-button:hover::before {
+            left: 100%;
+        }
+
+        .card-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+
+        .card-button:active {
+            transform: translateY(0);
+        }
+
+        /* ===== RESPONSIVE ADJUSTMENTS ===== */
+        @media (max-width: 480px) {
+            .interactive-card {
+                height: 380px;
+            }
+            
+            .card-title {
+                font-size: 1.5rem;
+            }
+            
+            .card-description {
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Background -->
+    <video autoplay muted loop playsinline class="video-background">
+        <source src="videos/12421669_3840_2160_30fps.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- Enhancement Layers -->
+    <div class="bg-overlay"></div>
+    <div class="bg-bokeh"></div>
+    <div class="bg-grain"></div>
+
+    <!-- Main Content -->
+    <div class="content-container">
+        <div class="interactive-card">
+            <div class="card-glow"></div>
+            <div class="card-content">
+                <h2 class="card-title">Nexus Store</h2>
+                <p class="card-description">
+                    Experience the future of shopping with our immersive virtual boutique. 
+                    Discover exclusive collections and innovative products in a stunning 3D environment.
+                </p>
+                <button class="card-button">Explore Collection</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Interactive Card Mouse Movement Effect
+        document.addEventListener('DOMContentLoaded', function() {
+            const card = document.querySelector('.interactive-card');
+            const container = document.querySelector('.content-container');
+            
+            if (!card || !container) return;
+
+            // Mouse move effect
+            container.addEventListener('mousemove', function(e) {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left; // x position within the container
+                const y = e.clientY - rect.top;  // y position within the container
+                
+                // Calculate movement amount (subtle effect)
+                const moveX = ((x / rect.width) - 0.5) * 10; // -5 to 5 range
+                const moveY = ((y / rect.height) - 0.5) * 10; // -5 to 5 range
+                
+                // Apply transform with smooth transition
+                card.style.transform = `
+                    perspective(1000px)
+                    rotateX(${-moveY}deg)
+                    rotateY(${moveX}deg)
+                    scale3d(1, 1, 1)
+                `;
+                card.style.transition = 'transform 0.1s ease-out';
+            });
+
+            // Reset position when mouse leaves
+            container.addEventListener('mouseleave', function() {
+                card.style.transform = `
+                    perspective(1000px)
+                    rotateX(0deg)
+                    rotateY(0deg)
+                    scale3d(1, 1, 1)
+                `;
+                card.style.transition = 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1)';
+            });
+
+            // Video play assurance (some browsers block autoplay)
+            const video = document.querySelector('.video-background');
+            if (video) {
+                const playVideo = () => {
+                    video.play().catch(e => {
+                        console.log('Video playback prevented:', e);
+                    });
+                };
+                
+                // Try to play on load
+                playVideo();
+                
+                // Add click listener as fallback for blocked autoplay
+                document.addEventListener('click', playVideo, { once: true });
+                document.addEventListener('touchstart', playVideo, { once: true });
+            }
+        });
+    </script>
+</body>
+</html>
