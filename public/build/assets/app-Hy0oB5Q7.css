@@ -1,0 +1,1 @@
+.page-enter-active,.page-leave-active{transition:all .6s cubic-bezier(.4,0,.2,1)}.page-enter-from{opacity:0;transform:translateY(30px) scale(.98)}.page-leave-to{opacity:0;transform:translateY(-30px) scale(1.02)}.fade-enter-active,.fade-leave-active{transition:opacity .5s}.fade-enter-from,.fade-leave-to{opacity:0}

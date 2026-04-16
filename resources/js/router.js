@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard.vue'
 import ProductsIndex from './pages/ProductsIndex.vue'
 import ProductCreate from './pages/ProductCreate.vue'
 import ProductEdit from './pages/ProductEdit.vue'
+import SuppliersIndex from './pages/SuppliersIndex.vue'
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     name: 'products.edit',
     component: ProductEdit,
     props: true
+  },
+  {
+    path: '/suppliers',
+    name: 'suppliers.index',
+    component: SuppliersIndex
   }
 ]
 
