@@ -1,210 +1,277 @@
 <template>
-  <div class="space-y-16 animate-in fade-in duration-1000">
-    <!-- Hero Section -->
-    <section class="text-center space-y-8 py-6">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full z-glass border-indigo-500/20 text-indigo-400 text-[8px] font-black uppercase tracking-[0.3em] animate-pulse mb-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
-        Sistema Nexus Ativo
-      </div>
-      <h1 class="text-6xl md:text-8xl font-black text-white tracking-tighter leading-[0.85] mb-6">
-        CONTROLE<br/><span class="text-transparent bg-clip-text bg-gradient-to-b from-indigo-400 to-indigo-900">CENTRAL</span>
-      </h1>
-      <p class="max-w-xl mx-auto text-slate-300 text-base font-medium leading-relaxed mb-8">
-        A plataforma definitiva onde inteligência e inventário se encontram. 
-        Gerencie recursos com precisão cirúrgica em um ambiente de alta performance.
-      </p>
-      <div class="flex flex-col sm:flex-row justify-center gap-4 pt-2">
-        <router-link to="/products" class="z-btn group min-w-[180px]">
-          <span>Ver Estoque</span>
-          <ArrowRightIcon class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-500" />
-        </router-link>
-        <router-link to="/products/new" class="z-btn-secondary min-w-[180px]">
-          <span>Novo Produto</span>
-        </router-link>
-      </div>
-    </section>
+  <section class="page-stack">
+    <PageHeader
+      eyebrow="Visao geral"
+      title="Controle de estoque com foco em operacao"
+      description="Acompanhe o total de itens, fornecedores ativos, tipos cadastrados e os pontos que ainda pedem atencao."
+    >
+      <template #actions>
+        <RouterLink to="/products" class="btn-primary">
+          <Package class="h-4 w-4" />
+          <span>Itens</span>
+        </RouterLink>
+        <RouterLink to="/suppliers" class="btn-secondary">
+          <Truck class="h-4 w-4" />
+          <span>Fornecedores</span>
+        </RouterLink>
+        <RouterLink to="/types" class="btn-secondary">
+          <Tags class="h-4 w-4" />
+          <span>Tipos</span>
+        </RouterLink>
+      </template>
+    </PageHeader>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="z-card p-6 space-y-3 group">
-        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-500">
-          <PackageIcon class="w-5 h-5" />
-        </div>
-        <div>
-          <h3 class="text-slate-400 text-[8px] font-bold uppercase tracking-widest">Unidades Ativas</h3>
-          <p class="text-4xl font-black text-white tabular-nums">{{ totalProducts }}</p>
-        </div>
-      </div>
-
-      <div class="z-card p-6 space-y-3 group">
-        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500">
-          <DollarSignIcon class="w-5 h-5" />
-        </div>
-        <div>
-          <h3 class="text-slate-400 text-[8px] font-bold uppercase tracking-widest">Valor Total</h3>
-          <p class="text-4xl font-black text-white tabular-nums">R$ {{ totalValue }}</p>
-        </div>
-      </div>
-
-      <div class="z-card p-6 space-y-3 group">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-all duration-500">
-          <GridIcon class="w-5 h-5" />
-        </div>
-        <div>
-          <h3 class="text-slate-400 text-[8px] font-bold uppercase tracking-widest">Categorias</h3>
-          <p class="text-4xl font-black text-white tabular-nums">{{ totalTypes }}</p>
-        </div>
-      </div>
+    <div class="stats-grid">
+      <MetricCard
+        title="Itens cadastrados"
+        :value="String(products.length)"
+        description="Volume total de produtos disponiveis no cadastro."
+        badge="Estoque"
+        tone="accent"
+      />
+      <MetricCard
+        title="Valor estimado"
+        :value="inventoryValue"
+        description="Soma de preco unitario multiplicado pelo saldo de estoque."
+        badge="Financeiro"
+        tone="neutral"
+      />
+      <MetricCard
+        title="Fornecedores ativos"
+        :value="String(activeSuppliers)"
+        description="Parceiros prontos para atender novos pedidos."
+        badge="Rede"
+        tone="success"
+      />
+      <MetricCard
+        title="Tipos cadastrados"
+        :value="String(types.length)"
+        description="Categorias usadas para organizar os itens."
+        badge="Catalogo"
+        tone="neutral"
+      />
     </div>
 
-    <!-- Data Visualization -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-      <div class="lg:col-span-3 z-card p-10">
-        <div class="flex justify-between items-center mb-10">
-          <h2 class="text-xl font-black text-white uppercase tracking-tighter">Fluxo de Inventário</h2>
-          <div class="flex gap-2">
-            <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
-            <div class="w-2 h-2 rounded-full bg-white/10"></div>
+    <div class="dashboard-grid">
+      <section class="panel section-stack">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Acompanhamento</p>
+            <h2 class="section-title">Itens com estoque baixo</h2>
           </div>
+          <span class="chip chip-warning">{{ lowStockProducts.length }} alerta(s)</span>
         </div>
-        <div class="h-[350px]">
-          <Bar v-if="chartData.datasets[0].data.length > 0" :data="chartData" :options="chartOptions" />
-        </div>
-      </div>
 
-      <div class="lg:col-span-2 z-card p-10 flex flex-col">
-        <h2 class="text-xl font-black text-white uppercase tracking-tighter mb-10">Últimos Sinais</h2>
-        <div class="space-y-6 flex-grow">
-          <div v-for="product in recentProducts" :key="product.id" class="flex items-center justify-between group cursor-pointer">
-            <div class="flex items-center gap-4">
-              <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center group-hover:border-indigo-500/50 transition-colors">
-                <span class="text-xs font-bold text-slate-500">{{ product.name.charAt(0) }}</span>
+        <div v-if="loading" class="loading-state">Carregando indicadores...</div>
+
+        <div v-else-if="lowStockProducts.length" class="data-list">
+          <article
+            v-for="product in lowStockProducts"
+            :key="product.id"
+            class="simple-list-item"
+          >
+            <div class="item-visual">
+              <div class="avatar">
+                <img v-if="product.photo_url" :src="product.photo_url" alt="" />
+                <span v-else>{{ getInitials(product.name) }}</span>
               </div>
-              <div>
-                <p class="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{{ product.name }}</p>
-                <p class="text-[10px] font-bold text-slate-500 uppercase">{{ formatDate(product.created_at) }}</p>
+              <div class="min-w-0">
+                <p class="item-title">{{ product.name }}</p>
+                <p class="item-subtitle">
+                  {{ product.type?.name || 'Sem tipo' }} · {{ product.supplier?.name || 'Sem fornecedor' }}
+                </p>
               </div>
             </div>
+
             <div class="text-right">
-              <p class="text-sm font-black text-white">R$ {{ formatPrice(product.price) }}</p>
-              <div class="inline-block px-2 py-0.5 rounded-md bg-white/5 text-[8px] font-black text-slate-400 uppercase tracking-tighter">
-                {{ product.type?.name || 'Unidade' }}
+              <p class="item-title">{{ product.quantity }} un.</p>
+              <p class="item-subtitle">{{ formatCurrency(product.price) }}</p>
+            </div>
+          </article>
+        </div>
+
+        <div v-else class="empty-state">
+          <p class="empty-title">Nenhum item em risco agora.</p>
+          <p class="empty-description">O estoque esta equilibrado para os produtos cadastrados.</p>
+        </div>
+      </section>
+
+      <section class="panel section-stack">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Rede de parceiros</p>
+            <h2 class="section-title">Fornecedores recentes</h2>
+          </div>
+          <span class="chip chip-neutral">{{ suppliers.length }} total</span>
+        </div>
+
+        <div v-if="loading" class="loading-state">Sincronizando fornecedores...</div>
+
+        <div v-else-if="recentSuppliers.length" class="data-list">
+          <article
+            v-for="supplier in recentSuppliers"
+            :key="supplier.id"
+            class="simple-list-item"
+          >
+            <div class="item-visual">
+              <div class="avatar">
+                <img v-if="supplier.profile_photo_url" :src="supplier.profile_photo_url" alt="" />
+                <span v-else>{{ getInitials(supplier.name) }}</span>
+              </div>
+              <div class="min-w-0">
+                <p class="item-title">{{ supplier.name }}</p>
+                <p class="item-subtitle">{{ supplier.contact_name || 'Sem responsavel informado' }}</p>
               </div>
             </div>
-          </div>
+
+            <div class="text-right">
+              <span :class="['chip', supplier.is_active ? 'chip-success' : 'chip-danger']">
+                {{ supplier.is_active ? 'Ativo' : 'Inativo' }}
+              </span>
+            </div>
+          </article>
         </div>
-        <router-link to="/products" class="mt-10 text-center text-[10px] font-black text-indigo-400 hover:text-white uppercase tracking-[0.2em] transition-colors">
-          Ver Todas as Unidades →
-        </router-link>
-      </div>
+
+        <div v-else class="empty-state">
+          <p class="empty-title">Nenhum fornecedor cadastrado ainda.</p>
+          <p class="empty-description">Crie o primeiro fornecedor para completar o fluxo de compras.</p>
+        </div>
+      </section>
     </div>
-  </div>
+
+    <div class="split-grid">
+      <section class="panel section-stack">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Movimentacao</p>
+            <h2 class="section-title">Ultimos itens adicionados</h2>
+          </div>
+          <RouterLink to="/products" class="text-link">Abrir listagem</RouterLink>
+        </div>
+
+        <div v-if="loading" class="loading-state">Montando historico recente...</div>
+
+        <div v-else-if="recentProducts.length" class="data-list">
+          <article
+            v-for="product in recentProducts"
+            :key="product.id"
+            class="simple-list-item"
+          >
+            <div class="min-w-0">
+              <p class="item-title">{{ product.name }}</p>
+              <p class="item-subtitle">
+                {{ formatDateTime(product.created_at) }} · {{ product.type?.name || 'Sem tipo' }}
+              </p>
+            </div>
+
+            <div class="text-right">
+              <p class="item-title">{{ formatCurrency(product.price) }}</p>
+              <p class="item-subtitle">{{ product.quantity }} un.</p>
+            </div>
+          </article>
+        </div>
+
+        <div v-else class="empty-state">
+          <p class="empty-title">Sem movimentacao registrada.</p>
+          <p class="empty-description">Quando novos itens forem criados, eles aparecerao aqui.</p>
+        </div>
+      </section>
+
+      <section class="panel section-stack">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Organizacao</p>
+            <h2 class="section-title">Tipos mais usados</h2>
+          </div>
+          <RouterLink to="/types" class="text-link">Editar tipos</RouterLink>
+        </div>
+
+        <div v-if="loading" class="loading-state">Lendo catalogo...</div>
+
+        <div v-else-if="types.length" class="type-summary-grid">
+          <article
+            v-for="type in highlightedTypes"
+            :key="type.id"
+            class="type-summary-card"
+          >
+            <p class="type-summary-name">{{ type.name }}</p>
+            <p class="type-summary-description">
+              {{ type.description || 'Sem descricao cadastrada.' }}
+            </p>
+            <span class="chip chip-neutral">{{ type.products_count }} item(ns)</span>
+          </article>
+        </div>
+
+        <div v-else class="empty-state">
+          <p class="empty-title">Voce ainda nao cadastrou tipos.</p>
+          <p class="empty-description">Use os tipos para manter o estoque mais organizado.</p>
+        </div>
+      </section>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
-import { 
-  Package as PackageIcon, 
-  DollarSign as DollarSignIcon,
-  Grid as GridIcon,
-  ArrowRight as ArrowRightIcon
-} from 'lucide-vue-next'
-import { Bar } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
+import { RouterLink } from 'vue-router'
+import { Package, Tags, Truck } from 'lucide-vue-next'
+import MetricCard from '../components/MetricCard.vue'
+import PageHeader from '../components/PageHeader.vue'
+import { pushNotification } from '../composables/useNotifications'
+import { formatCurrency, formatDateTime, getInitials } from '../utils/formatters'
+import { getApiMessage } from '../utils/http'
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
-
-const products = ref([])
-const types = ref([])
 const loading = ref(true)
+const products = ref([])
+const suppliers = ref([])
+const types = ref([])
 
-const totalProducts = computed(() => products.value.length)
-const totalTypes = computed(() => types.value.length)
-const totalValue = computed(() => {
-  const sum = products.value.reduce((acc, p) => acc + (parseFloat(p.price) * p.quantity), 0)
-  return sum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const inventoryValue = computed(() => {
+  const total = products.value.reduce((sum, product) => {
+    return sum + Number(product.price) * Number(product.quantity)
+  }, 0)
+
+  return formatCurrency(total)
 })
 
-const recentProducts = computed(() => {
-  return [...products.value].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)
-})
+const activeSuppliers = computed(() => suppliers.value.filter((supplier) => supplier.is_active).length)
 
-const chartData = ref({
-  labels: [],
-  datasets: [
-    {
-      label: 'Unidades',
-      backgroundColor: '#6366f1',
-      hoverBackgroundColor: '#818cf8',
-      borderRadius: 12,
-      data: []
-    }
-  ]
-})
+const lowStockProducts = computed(() =>
+  [...products.value]
+    .filter((product) => Number(product.quantity) <= 5)
+    .sort((left, right) => Number(left.quantity) - Number(right.quantity))
+    .slice(0, 5)
+)
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: '#030712',
-      titleFont: { size: 12, weight: 'bold' },
-      bodyFont: { size: 12 },
-      padding: 12,
-      cornerRadius: 12,
-      borderColor: 'rgba(255,255,255,0.1)',
-      borderWidth: 1
-    }
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
-      ticks: { color: '#64748b', font: { size: 10, weight: 'bold' } }
-    },
-    x: {
-      grid: { display: false },
-      ticks: { color: '#64748b', font: { size: 10, weight: 'bold' } }
-    }
-  }
-}
+const recentSuppliers = computed(() => suppliers.value.slice(0, 5))
+const recentProducts = computed(() => products.value.slice(0, 6))
 
-const fetchData = async () => {
+const highlightedTypes = computed(() =>
+  [...types.value]
+    .sort((left, right) => Number(right.products_count) - Number(left.products_count))
+    .slice(0, 6)
+)
+
+async function fetchDashboard() {
+  loading.value = true
+
   try {
-    const [pRes, tRes] = await Promise.all([
+    const [productsResponse, suppliersResponse, typesResponse] = await Promise.all([
       axios.get('/api/products'),
-      axios.get('/api/types')
+      axios.get('/api/suppliers'),
+      axios.get('/api/types'),
     ])
-    products.value = pRes.data
-    types.value = tRes.data
-    
-    const typeCounts = {}
-    products.value.forEach(p => {
-      const typeName = p.type?.name || 'Outros'
-      typeCounts[typeName] = (typeCounts[typeName] || 0) + p.quantity
-    })
-    
-    chartData.value.labels = Object.keys(typeCounts)
-    chartData.value.datasets[0].data = Object.values(typeCounts)
+
+    products.value = productsResponse.data
+    suppliers.value = suppliersResponse.data
+    types.value = typesResponse.data
   } catch (error) {
-    console.error('Data sync failed:', error)
+    pushNotification(getApiMessage(error, 'Nao foi possivel carregar o dashboard.'), 'error')
   } finally {
     loading.value = false
   }
 }
 
-const formatPrice = (price) => {
-  return parseFloat(price).toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
-}
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-}
-
-onMounted(fetchData)
+onMounted(fetchDashboard)
 </script>

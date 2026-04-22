@@ -4,103 +4,85 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\Type;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(): JsonResponse
     {
-        $products = Product::with('type')->orderBy('created_at', 'desc')->get();
+        $products = Product::with(['type', 'supplier'])
+            ->latest()
+            ->get();
 
         return response()->json($products);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'quantity' => 'required|integer|min:0',
-            'price' => 'required|numeric|min:0',
-            'type_id' => 'required|integer|min:1',
-        ]);
+        $validated = $this->validatedData($request);
 
-        // Garante que o Type existe
-        Type::firstOrCreate(
-            ['id' => $validated['type_id']],
-            ['name' => 'Tipo ' . $validated['type_id']]
-        );
+        if ($request->hasFile('photo')) {
+            $validated['photo_path'] = $request->file('photo')->store('products', 'public');
+        }
 
         $product = Product::create($validated);
 
-        return response()->json($product, 201);
+        return response()->json($product->fresh()->load(['type', 'supplier']), 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id): JsonResponse
+    public function show(Product $product): JsonResponse
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            return response()->json(['message' => 'Produto não encontrado'], 404);
-        }
-
-        return response()->json($product);
+        return response()->json($product->load(['type', 'supplier']));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(Request $request, Product $product): JsonResponse
     {
-        $product = Product::find($id);
+        $validated = $this->validatedData($request);
 
-        if (!$product) {
-            return response()->json(['message' => 'Produto não encontrado'], 404);
+        if ($request->boolean('remove_photo') && $product->photo_path) {
+            Storage::disk('public')->delete($product->photo_path);
+            $validated['photo_path'] = null;
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'quantity' => 'required|integer|min:0',
-            'price' => 'required|numeric|min:0',
-            'type_id' => 'required|integer|min:1',
-        ]);
+        if ($request->hasFile('photo')) {
+            if ($product->photo_path) {
+                Storage::disk('public')->delete($product->photo_path);
+            }
 
-        // Garante que o Type existe
-        Type::firstOrCreate(
-            ['id' => $validated['type_id']],
-            ['name' => 'Tipo ' . $validated['type_id']]
-        );
+            $validated['photo_path'] = $request->file('photo')->store('products', 'public');
+        }
 
         $product->update($validated);
 
-        return response()->json($product);
+        return response()->json($product->fresh()->load(['type', 'supplier']));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Product $product): JsonResponse
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            return response()->json(['message' => 'Produto não encontrado'], 404);
+        if ($product->photo_path) {
+            Storage::disk('public')->delete($product->photo_path);
         }
 
         $product->delete();
 
-        return response()->json(['message' => 'Produto excluído com sucesso']);
+        return response()->json([
+            'message' => 'Produto removido com sucesso.',
+        ]);
+    }
+
+    protected function validatedData(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:4000'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'type_id' => ['required', 'exists:types,id'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'photo' => ['nullable', 'image', 'max:4096'],
+            'remove_photo' => ['nullable', 'boolean'],
+        ]);
     }
 }
