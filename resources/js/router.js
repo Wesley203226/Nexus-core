@@ -1,40 +1,41 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from './pages/Dashboard.vue'
 import ProductsIndex from './pages/ProductsIndex.vue'
-import ProductCreate from './pages/ProductCreate.vue'
-import ProductEdit from './pages/ProductEdit.vue'
 import SuppliersIndex from './pages/SuppliersIndex.vue'
+import TypesIndex from './pages/TypesIndex.vue'
 
 const routes = [
   {
     path: '/',
     name: 'dashboard',
-    component: Dashboard
+    component: Dashboard,
   },
   {
     path: '/products',
     name: 'products.index',
-    component: ProductsIndex
+    component: ProductsIndex,
   },
   {
     path: '/products/new',
-    name: 'products.create',
-    component: ProductCreate
+    redirect: { name: 'products.index' },
   },
   {
     path: '/products/:id/edit',
-    name: 'products.edit',
-    component: ProductEdit,
-    props: true
+    redirect: { name: 'products.index' },
   },
   {
     path: '/suppliers',
     name: 'suppliers.index',
-    component: SuppliersIndex
-  }
+    component: SuppliersIndex,
+  },
+  {
+    path: '/types',
+    name: 'types.index',
+    component: TypesIndex,
+  },
 ]
 
 export default createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })

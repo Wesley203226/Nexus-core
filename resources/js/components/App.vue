@@ -1,114 +1,141 @@
 <template>
-  <div id="app-container" class="min-h-screen relative selection:bg-indigo-500/30 z-10">
-    <!-- Floating Minimal Nav -->
-    <nav class="z-nav">
-      <router-link to="/" class="flex items-center gap-2 group no-underline">
-        <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center group-hover:rotate-12 transition-all duration-500 shadow-lg shadow-indigo-500/20">
-          <ShoppingCartIcon class="w-4 h-4 text-white" />
+  <div class="app-frame">
+    <header class="top-nav shell">
+      <div class="brand-block">
+        <div class="brand-mark">
+          <Boxes class="h-5 w-5" />
         </div>
-        <div class="flex flex-col leading-none">
-          <span class="text-white font-black tracking-tighter text-sm uppercase">Nexus</span>
+        <div>
+          <p class="eyebrow">Nexus Core</p>
+          <h1 class="brand-title">Painel operacional</h1>
         </div>
-      </router-link>
-      
-      <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
-      
-      <div class="flex items-center gap-6">
-        <router-link to="/" class="z-link" active-class="z-link-active">Início</router-link>
-        <router-link to="/products" class="z-link" active-class="z-link-active">Estoque</router-link>
-        <router-link to="/products/new" class="z-link" active-class="z-link-active">Cadastrar</router-link>
       </div>
-    </nav>
 
-    <!-- Main Content Portal -->
-    <div class="z-portal">
-      <!-- Flash Messages -->
-      <transition name="fade">
-        <div v-if="flashMessage" class="fixed top-24 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-4">
-          <div
-            :class="[
-              'z-glass p-4 rounded-2xl flex items-center gap-4 shadow-2xl border-l-4 animate-in slide-in-from-top duration-500',
-              flashMessage.type === 'success' ? 'border-indigo-500' : 'border-rose-500'
-            ]"
-          >
-            <CheckCircleIcon v-if="flashMessage.type === 'success'" class="h-6 w-6 text-indigo-400" />
-            <AlertCircleIcon v-else class="h-6 w-6 text-rose-400" />
-            <p class="text-sm font-bold text-white uppercase tracking-tight">{{ flashMessage.message }}</p>
-            <button @click="clearFlashMessage" class="ml-auto p-1 hover:bg-white/5 rounded-full">
-              <XIcon class="h-4 h-4 text-slate-500" />
+      <button type="button" class="nav-toggle" @click="mobileMenuOpen = !mobileMenuOpen">
+        <Menu v-if="!mobileMenuOpen" class="h-5 w-5" />
+        <X v-else class="h-5 w-5" />
+      </button>
+
+      <nav :class="['nav-links', { 'nav-links-open': mobileMenuOpen }]">
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          :class="['nav-link', { 'nav-link-active': route.path === item.to }]"
+        >
+          <component :is="item.icon" class="h-4 w-4" />
+          <span>{{ item.label }}</span>
+        </RouterLink>
+      </nav>
+
+      <div class="nav-cta">
+        <RouterLink to="/products" class="btn-primary">
+          <Sparkles class="h-4 w-4" />
+          <span>Gerenciar estoque</span>
+        </RouterLink>
+      </div>
+    </header>
+
+    <main class="shell page-shell">
+      <RouterView />
+    </main>
+
+    <footer class="shell footer-bar">
+      <p>Nexus Core reorganizado para produtos, fornecedores e tipos.</p>
+      <p>Uploads, CRUDs e design unificados em uma unica interface.</p>
+    </footer>
+
+    <div class="toast-stack">
+      <transition-group name="toast-move">
+        <div
+          v-for="notification in notifications"
+          :key="notification.id"
+          :class="['toast', `toast-${notification.type}`]"
+        >
+          <div class="flex items-start gap-3">
+            <div class="toast-icon">
+              <CircleCheckBig v-if="notification.type === 'success'" class="h-4 w-4" />
+              <TriangleAlert v-else class="h-4 w-4" />
+            </div>
+
+            <div class="flex-1">
+              <p class="toast-title">
+                {{ notification.type === 'success' ? 'Operacao concluida' : 'Ajuste necessario' }}
+              </p>
+              <p class="toast-message">{{ notification.message }}</p>
+            </div>
+
+            <button type="button" class="icon-btn" @click="removeNotification(notification.id)">
+              <X class="h-4 w-4" />
             </button>
           </div>
         </div>
-      </transition>
-
-      <!-- Dynamic Page Content -->
-      <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-
-      <!-- Minimal Footer -->
-      <footer class="mt-20 py-10 border-t border-white/5 flex justify-between items-center text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">
-        <div>Human-Agentic OS // 2026</div>
-        <div class="flex gap-8">
-          <span class="hover:text-white transition-colors cursor-pointer">Protocol</span>
-          <span class="hover:text-white transition-colors cursor-pointer">Security</span>
-          <span class="hover:text-white transition-colors cursor-pointer">Terminal</span>
-        </div>
-      </footer>
+      </transition-group>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { 
-  ShoppingCart as ShoppingCartIcon, 
-  CheckCircle as CheckCircleIcon,
-  AlertCircle as AlertCircleIcon,
-  X as XIcon
+import { onMounted, ref, watch } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+import {
+  Boxes,
+  CircleCheckBig,
+  LayoutDashboard,
+  Menu,
+  Package,
+  Sparkles,
+  Tags,
+  TriangleAlert,
+  Truck,
+  X,
 } from 'lucide-vue-next'
+import {
+  notifications,
+  pushNotification,
+  removeNotification,
+} from '../composables/useNotifications'
 
-// Flash message state
-const flashMessage = ref(null)
+const route = useRoute()
+const mobileMenuOpen = ref(false)
 
-// Clear flash message
-const clearFlashMessage = () => {
-  flashMessage.value = null
-}
+const navItems = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/products', label: 'Itens', icon: Package },
+  { to: '/suppliers', label: 'Fornecedores', icon: Truck },
+  { to: '/types', label: 'Tipos', icon: Tags },
+]
+
+watch(
+  () => route.fullPath,
+  () => {
+    mobileMenuOpen.value = false
+  }
+)
 
 onMounted(() => {
   const successMessage = document.querySelector('meta[name="flash-success"]')?.getAttribute('content')
   const errorMessage = document.querySelector('meta[name="flash-error"]')?.getAttribute('content')
 
   if (successMessage) {
-    flashMessage.value = { type: 'success', message: successMessage }
-    setTimeout(clearFlashMessage, 5000)
-  } else if (errorMessage) {
-    flashMessage.value = { type: 'error', message: errorMessage }
-    setTimeout(clearFlashMessage, 5000)
+    pushNotification(successMessage, 'success')
+  }
+
+  if (errorMessage) {
+    pushNotification(errorMessage, 'error')
   }
 })
 </script>
 
 <style>
-.page-enter-active, .page-leave-active {
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(30px) scale(0.98);
-}
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-30px) scale(1.02);
+.toast-move-enter-active,
+.toast-move-leave-active {
+  transition: all 0.25s ease;
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s;
-}
-.fade-enter-from, .fade-leave-to {
+.toast-move-enter-from,
+.toast-move-leave-to {
   opacity: 0;
+  transform: translateY(-10px);
 }
 </style>
