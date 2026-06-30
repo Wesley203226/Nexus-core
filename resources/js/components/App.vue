@@ -82,9 +82,11 @@ import {
   Boxes,
   CircleCheckBig,
   LayoutDashboard,
+  BarChart3,
   Menu,
   Package,
   Sparkles,
+  Store,
   Tags,
   TriangleAlert,
   Truck,
@@ -101,9 +103,11 @@ const mobileMenuOpen = ref(false)
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/catalog', label: 'Catalogo', icon: Store },
   { to: '/products', label: 'Itens', icon: Package },
   { to: '/suppliers', label: 'Fornecedores', icon: Truck },
   { to: '/types', label: 'Tipos', icon: Tags },
+  { to: '/reports', label: 'Relatorios', icon: BarChart3 },
 ]
 
 watch(

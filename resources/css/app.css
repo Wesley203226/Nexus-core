@@ -286,6 +286,8 @@ button {
     }
 
     .stats-grid,
+    .chart-grid,
+    .catalog-grid,
     .control-grid,
     .dashboard-grid,
     .split-grid,
@@ -298,6 +300,14 @@ button {
 
     .stats-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .chart-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .catalog-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .control-grid,
@@ -548,6 +558,76 @@ button {
         text-align: center;
     }
 
+    .chart-frame {
+        position: relative;
+        height: 19rem;
+        min-height: 19rem;
+    }
+
+    .report-table {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .report-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 1.2rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .report-value {
+        margin-top: 0.55rem;
+    }
+
+    .catalog-card {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: 1.6rem;
+        padding: 1rem;
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        box-shadow: var(--shadow);
+    }
+
+    .catalog-card-image {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        border-radius: 1.2rem;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    .catalog-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .catalog-title {
+        margin-top: 0.4rem;
+        font-size: 1.25rem;
+    }
+
+    .catalog-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+
     .empty-title,
     .toast-title,
     .type-summary-name {
@@ -625,6 +705,8 @@ button {
 
 @media (max-width: 1100px) {
     .stats-grid,
+    .chart-grid,
+    .catalog-grid,
     .type-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -677,9 +759,16 @@ button {
     }
 
     .stats-grid,
+    .chart-grid,
+    .catalog-grid,
     .form-grid,
     .type-grid {
         grid-template-columns: 1fr;
+    }
+
+    .report-row {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .footer-bar {

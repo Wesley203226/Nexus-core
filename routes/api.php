@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\InventoryReportController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TypeController;
 use Illuminate\Http\Request;
@@ -13,3 +14,4 @@ Route::get('/user', function (Request $request) {
 Route::apiResource('types', TypeController::class);
 Route::apiResource('suppliers', SupplierController::class);
 Route::apiResource('products', ProductController::class);
+Route::get('reports/inventory', InventoryReportController::class);

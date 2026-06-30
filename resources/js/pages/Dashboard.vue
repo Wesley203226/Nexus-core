@@ -52,6 +52,38 @@
       />
     </div>
 
+    <div class="chart-grid">
+      <section class="panel section-stack">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Graficos</p>
+            <h2 class="section-title">Produtos por tipo</h2>
+          </div>
+          <span class="chip chip-neutral">{{ types.length }} tipo(s)</span>
+        </div>
+
+        <div v-if="loading" class="loading-state">Preparando grafico...</div>
+        <div v-else class="chart-frame">
+          <Doughnut :data="typeChartData" :options="doughnutOptions" />
+        </div>
+      </section>
+
+      <section class="panel section-stack">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Financeiro</p>
+            <h2 class="section-title">Valor de estoque por tipo</h2>
+          </div>
+          <span class="chip chip-neutral">{{ inventoryValue }}</span>
+        </div>
+
+        <div v-if="loading" class="loading-state">Calculando valores...</div>
+        <div v-else class="chart-frame">
+          <Bar :data="valueChartData" :options="barOptions" />
+        </div>
+      </section>
+    </div>
+
     <div class="dashboard-grid">
       <section class="panel section-stack">
         <div class="panel-header">
@@ -214,6 +246,16 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
+import {
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  Tooltip,
+} from 'chart.js'
+import { Bar, Doughnut } from 'vue-chartjs'
 import { RouterLink } from 'vue-router'
 import { Package, Tags, Truck } from 'lucide-vue-next'
 import MetricCard from '../components/MetricCard.vue'
@@ -222,10 +264,14 @@ import { pushNotification } from '../composables/useNotifications'
 import { formatCurrency, formatDateTime, getInitials } from '../utils/formatters'
 import { getApiMessage } from '../utils/http'
 
+ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Legend, Tooltip)
+
 const loading = ref(true)
 const products = ref([])
 const suppliers = ref([])
 const types = ref([])
+
+const chartColors = ['#f28c28', '#2bb38a', '#f3b543', '#ef6a62', '#7dd3fc', '#c084fc']
 
 const inventoryValue = computed(() => {
   const total = products.value.reduce((sum, product) => {
@@ -252,6 +298,87 @@ const highlightedTypes = computed(() =>
     .sort((left, right) => Number(right.products_count) - Number(left.products_count))
     .slice(0, 6)
 )
+
+const typeChartData = computed(() => ({
+  labels: types.value.map((type) => type.name),
+  datasets: [
+    {
+      data: types.value.map((type) => Number(type.products_count || 0)),
+      backgroundColor: chartColors,
+      borderColor: 'rgba(12, 18, 25, 0.95)',
+      borderWidth: 2,
+    },
+  ],
+}))
+
+const valueChartData = computed(() => {
+  const labels = types.value.map((type) => type.name)
+  const values = types.value.map((type) => {
+    return products.value
+      .filter((product) => Number(product.type_id) === Number(type.id))
+      .reduce((sum, product) => sum + Number(product.price) * Number(product.quantity), 0)
+  })
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Valor em estoque',
+        data: values,
+        backgroundColor: '#f28c28',
+        borderRadius: 10,
+      },
+    ],
+  }
+})
+
+const doughnutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        color: '#f7f2eb',
+        boxWidth: 12,
+      },
+    },
+  },
+}
+
+const barOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      callbacks: {
+        label: (context) => formatCurrency(context.raw),
+      },
+    },
+  },
+  scales: {
+    x: {
+      ticks: {
+        color: '#96a5b8',
+      },
+      grid: {
+        color: 'rgba(255, 255, 255, 0.06)',
+      },
+    },
+    y: {
+      ticks: {
+        color: '#96a5b8',
+        callback: (value) => formatCurrency(value),
+      },
+      grid: {
+        color: 'rgba(255, 255, 255, 0.06)',
+      },
+    },
+  },
+}
 
 async function fetchDashboard() {
   loading.value = true
